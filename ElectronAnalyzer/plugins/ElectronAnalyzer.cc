@@ -45,7 +45,7 @@ class ElectronAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> 
       ele_kfchi2,ele_gsfchi2,ele_fbrem,ele_ep,ele_eelepout,ele_IoEmIop,ele_deltaetain,ele_deltaphiin,ele_deltaetaseed,
       ele_psEoverEraw,ele_pfPhotonIso,ele_pfChargedHadIso,ele_pfNeutralHadIso,ele_PFPUIso,ElectronMVAEstimatorRun2Fall17IsoV2Values,ElectronMVAEstimatorRun2Fall17IsoV1Values,
       ElectronMVAEstimatorRun2Fall17NoIsoV1Values,ElectronMVAEstimatorRun2Fall17NoIsoV2Values;
-      std::vector<int> ele_kfhits, ele_chi2_hits,ele_gsfhits, ele_expected_inner_hits;
+      std::vector<int> ele_kfhits, ele_chi2_hits,ele_gsfhits, ele_expected_inner_hits,ele_charge;
       float Diele_mass, rho;
       int numele;
       TLorentzVector P,P0,P1;
@@ -101,6 +101,7 @@ rhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("rhoSrc"))
    electron_tree->Branch("ele_pfChargedHadIso",&ele_pfChargedHadIso);
    electron_tree->Branch("ele_pfNeutralHadIso",&ele_pfNeutralHadIso);
    electron_tree->Branch("rho",&rho);
+   electron_tree->Branch("ele_charge",&ele_charge);
 
    //isolation variables
    electron_tree->Branch("ele_pfPhotonIso",&ele_pfPhotonIso);
@@ -182,6 +183,7 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    ele_pfChargedHadIso.clear();
    ele_pfNeutralHadIso.clear();
    ele_PFPUIso.clear();
+   ele_charge.clear();
    cutBasedElectronID_Fall17_94X_V2_veto.clear();
    cutBasedElectronID_Fall17_94X_V2_loose.clear();
    cutBasedElectronID_Fall17_94X_V2_medium.clear();
@@ -232,6 +234,7 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
      ele_pfChargedHadIso.push_back(it->pfIsolationVariables().sumChargedHadronPt);
      ele_pfNeutralHadIso.push_back(it->pfIsolationVariables().sumNeutralHadronEt);
      ele_PFPUIso.push_back(it->pfIsolationVariables().sumPUPt);
+     ele_charge.push_back(it->charge());
      cutBasedElectronID_Fall17_94X_V2_veto.push_back(it->electronID("cutBasedElectronID-Fall17-94X-V2-veto"));
      cutBasedElectronID_Fall17_94X_V2_loose.push_back(it->electronID("cutBasedElectronID-Fall17-94X-V2-loose"));
      cutBasedElectronID_Fall17_94X_V2_medium.push_back(it->electronID("cutBasedElectronID-Fall17-94X-V2-medium"));
@@ -249,7 +252,7 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 
    }
 
-   if(numele==2 && ele_isPF[0]==1 && ele_isPF[1]==1)
+   if(numele==2 && ele_isPF[0]==1 && ele_isPF[1]==1 && ele_charge[0]==(-1.0)*ele_charge[1])
    {
      P0.SetPtEtaPhiM(ele_pt[0],ele_eta[0],ele_phi[0],0.00051);
      P1.SetPtEtaPhiM(ele_pt[1],ele_eta[1],ele_phi[1],0.00051);
