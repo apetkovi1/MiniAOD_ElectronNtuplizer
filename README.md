@@ -2,7 +2,7 @@
 ## Description
 This page contains instructions and examples of a way to extract information for Electron Tag and Probe from MiniAOD files
 
-## Usage instrucctions
+## Usage instructions
 
 * Set up your area:
 ```
@@ -28,12 +28,3 @@ scram b
 cd ElectronAnalyzer/python
 cmsRun ConfFile_cfg.py
 ```
-
-
-
-
-
-
-
-
-
