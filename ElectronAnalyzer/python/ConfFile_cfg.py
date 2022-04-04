@@ -15,12 +15,13 @@ process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condD
 
 process.GlobalTag = GlobalTag(process.GlobalTag, '102X_upgrade2018_realistic_v18')
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1))
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 process.source = cms.Source("PoolSource", fileNames =
-cms.untracked.vstring('file:00E6FFAF-1E0A-5049-9C12-FB3C7FFA466C.root') #MC
-#cms.untracked.vstring('file:00496A25-08B6-FB4E-9681-D5FF4E1BE81F.root') #data
+cms.untracked.vstring('file:00E6FFAF-1E0A-5049-9C12-FB3C7FFA466C.root') #MC JPsi
+#cms.untracked.vstring('file:00496A25-08B6-FB4E-9681-D5FF4E1BE81F.root') #data BParking
+#cms.untracked.vstring('file:07A30C76-A12D-9C42-8987-885BA67B0D0B.root') #DY Jets
 )
 
 setupEgammaPostRecoSeq(process,era='2018-Prompt')

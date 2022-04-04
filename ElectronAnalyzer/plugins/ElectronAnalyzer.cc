@@ -42,7 +42,7 @@ class ElectronAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> 
 
       TTree *electron_tree;
       std::vector<float> ele_pt,ele_eta,ele_phi,scl_eta,ele_oldsigmaietaieta,ele_oldsigmaiphiiphi,ele_oldcircularity,ele_oldr9,ele_scletawidth,ele_sclphiwidth,ele_he,ele_oldhe,
-      ele_kfchi2,ele_gsfchi2,ele_fbrem,ele_conversionVertexFitProbability,ele_ep,ele_eelepout,ele_IoEmIop,ele_deltaetain,ele_deltaphiin,ele_deltaetaseed,
+      ele_kfchi2,ele_gsfchi2,ele_fbrem,ele_ep,ele_eelepout,ele_IoEmIop,ele_deltaetain,ele_deltaphiin,ele_deltaetaseed,
       ele_psEoverEraw,ele_pfPhotonIso,ele_pfChargedHadIso,ele_pfNeutralHadIso,ele_PFPUIso,ElectronMVAEstimatorRun2Fall17IsoV2Values,ElectronMVAEstimatorRun2Fall17IsoV1Values,
       ElectronMVAEstimatorRun2Fall17NoIsoV1Values,ElectronMVAEstimatorRun2Fall17NoIsoV2Values;
       std::vector<int> ele_kfhits, ele_chi2_hits,ele_gsfhits, ele_expected_inner_hits;
@@ -90,7 +90,6 @@ rhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("rhoSrc"))
    electron_tree->Branch("ele_fbrem",&ele_fbrem);
    electron_tree->Branch("ele_gsfhits",&ele_gsfhits);
    electron_tree->Branch("ele_expected_inner_hits",&ele_expected_inner_hits);
-   electron_tree->Branch("ele_conversionVertexFitProbability",&ele_conversionVertexFitProbability);
    electron_tree->Branch("ele_ep",&ele_ep);
    electron_tree->Branch("ele_eelepout",&ele_eelepout);
    electron_tree->Branch("ele_IoEmIop",&ele_IoEmIop);
@@ -172,7 +171,6 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    ele_fbrem.clear();
    ele_gsfhits.clear();
    ele_expected_inner_hits.clear();
-   ele_conversionVertexFitProbability.clear();
    ele_ep.clear();
    ele_eelepout.clear();
    ele_IoEmIop.clear();
@@ -184,6 +182,14 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    ele_pfChargedHadIso.clear();
    ele_pfNeutralHadIso.clear();
    ele_PFPUIso.clear();
+   cutBasedElectronID_Fall17_94X_V2_veto.clear();
+   cutBasedElectronID_Fall17_94X_V2_loose.clear();
+   cutBasedElectronID_Fall17_94X_V2_medium.clear();
+   cutBasedElectronID_Fall17_94X_V2_tight.clear();
+   mvaEleID_Fall17_iso_V2_wp80.clear();
+   mvaEleID_Fall17_iso_V2_wp90.clear();
+   mvaEleID_Fall17_noIso_V2_wp80.clear();
+   mvaEleID_Fall17_noIso_V2_wp90.clear();
    ElectronMVAEstimatorRun2Fall17IsoV1Values.clear();
    ElectronMVAEstimatorRun2Fall17IsoV2Values.clear();
    ElectronMVAEstimatorRun2Fall17NoIsoV1Values.clear();
@@ -211,6 +217,7 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
      ele_kfchi2.push_back((it->closestCtfTrackRef().isAvailable() && it->closestCtfTrackRef().isNonnull()) ? it->closestCtfTrackRef()->normalizedChi2() : 0);
      ele_gsfchi2.push_back(it->gsfTrack()->normalizedChi2());
      ele_chi2_hits.push_back(it->gsfTrack()->normalizedChi2());
+     ele_fbrem.push_back(it->fbrem());
      ele_gsfhits.push_back(it->gsfTrack()->hitPattern().trackerLayersWithMeasurement());
      ele_expected_inner_hits.push_back(it->gsfTrack()->hitPattern().numberOfLostHits(reco::HitPattern::MISSING_INNER_HITS));
      //ele_conversionVertexFitProbability.push_back(it->convVtxFitProb()) ;
