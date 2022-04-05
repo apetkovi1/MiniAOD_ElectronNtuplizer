@@ -159,6 +159,7 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    scl_eta.clear();
    ele_pt.clear();
    ele_oldsigmaietaieta.clear();
+   ele_oldsigmaiphiiphi.clear();
    ele_oldcircularity.clear();
    ele_oldr9.clear();
    ele_scletawidth.clear();
