@@ -97,9 +97,6 @@ rhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("rhoSrc"))
    electron_tree->Branch("ele_deltaphiin",&ele_deltaphiin);
    electron_tree->Branch("ele_deltaetaseed",&ele_deltaetaseed);
    electron_tree->Branch("ele_psEoverEraw",&ele_psEoverEraw);
-   electron_tree->Branch("ele_pfPhotonIso",&ele_pfPhotonIso);
-   electron_tree->Branch("ele_pfChargedHadIso",&ele_pfChargedHadIso);
-   electron_tree->Branch("ele_pfNeutralHadIso",&ele_pfNeutralHadIso);
    electron_tree->Branch("rho",&rho);
    electron_tree->Branch("ele_charge",&ele_charge);
 
