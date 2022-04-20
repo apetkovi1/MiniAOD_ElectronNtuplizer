@@ -15,10 +15,10 @@
 #include "FWCore/Utilities/interface/InputTag.h"
 
 #include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
-
 
 class ElectronAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
    public:
@@ -39,15 +39,14 @@ class ElectronAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> 
       edm::EDGetTokenT<double> theRhoToken;
       edm::InputTag rhoSrc_;
 
-
       TTree *electron_tree;
       std::vector<float> ele_pt,ele_eta,ele_phi,scl_eta,ele_oldsigmaietaieta,ele_oldsigmaiphiiphi,ele_oldcircularity,ele_oldr9,ele_scletawidth,ele_sclphiwidth,ele_he,ele_oldhe,
       ele_kfchi2,ele_gsfchi2,ele_fbrem,ele_ep,ele_eelepout,ele_IoEmIop,ele_deltaetain,ele_deltaphiin,ele_deltaetaseed,
       ele_psEoverEraw,ele_pfPhotonIso,ele_pfChargedHadIso,ele_pfNeutralHadIso,ele_PFPUIso,ElectronMVAEstimatorRun2Fall17IsoV2Values,ElectronMVAEstimatorRun2Fall17IsoV1Values,
       ElectronMVAEstimatorRun2Fall17NoIsoV1Values,ElectronMVAEstimatorRun2Fall17NoIsoV2Values;
-      std::vector<int> ele_kfhits, ele_chi2_hits,ele_gsfhits, ele_expected_inner_hits,ele_charge;
+      std::vector<int> ele_kfhits, ele_chi2_hits,ele_gsfhits, ele_expected_inner_hits,ele_charge,ele_mother;
       float Diele_mass, rho;
-      int numele;
+      int numele, PFnumele;
       TLorentzVector P,P0,P1;
       std::vector<bool> ele_isPF, cutBasedElectronID_Fall17_94X_V2_veto, cutBasedElectronID_Fall17_94X_V2_loose, cutBasedElectronID_Fall17_94X_V2_medium, cutBasedElectronID_Fall17_94X_V2_tight,
       mvaEleID_Fall17_iso_V2_wp90, mvaEleID_Fall17_iso_V2_wp80, mvaEleID_Fall17_noIso_V2_wp90, mvaEleID_Fall17_noIso_V2_wp80,mvaEleID_Fall17_noIso_V2_wpLoose_unsopported,
@@ -67,10 +66,12 @@ rhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("rhoSrc"))
    electron_tree = fs->make<TTree>("Events", "Events");
 
    electron_tree->Branch("numele",&numele);
+   electron_tree->Branch("PFnumele",&PFnumele);
    electron_tree->Branch("ele_eta",&ele_eta);
    electron_tree->Branch("ele_phi",&ele_phi);
    electron_tree->Branch("ele_isPF",&ele_isPF);
    electron_tree->Branch("Diele_mass",&Diele_mass);
+   electron_tree->Branch("ele_mother",&ele_mother);
 
    //BDT ID branches
    electron_tree->Branch("scl_eta",&scl_eta);
@@ -138,8 +139,6 @@ ElectronAnalyzer::~ElectronAnalyzer()
 void
 ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-   using namespace edm;
-   using namespace reco;
 
    edm::Handle< std::vector<pat::Electron>> electrons;
    iEvent.getByToken(elecCollToken, electrons);
@@ -148,6 +147,7 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    iEvent.getByToken(theRhoToken, rhoHandle);
 
    numele=0;
+   PFnumele=0;
    Diele_mass=0;
    rho=0;
    ele_eta.clear();
@@ -155,6 +155,7 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    ele_isPF.clear();
    scl_eta.clear();
    ele_pt.clear();
+   ele_mother.clear();
    ele_oldsigmaietaieta.clear();
    ele_oldsigmaiphiiphi.clear();
    ele_oldcircularity.clear();
@@ -200,6 +201,8 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    for (auto it = electrons->cbegin(); it != electrons->cend(); ++it)
    {
      numele++;
+     if(it->isPF())
+     PFnumele++;
      ele_eta.push_back(it->eta());
      ele_phi.push_back(it->phi());
      ele_isPF.push_back(it->isPF());
@@ -248,9 +251,11 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
      mvaEleID_Fall17_noIso_V2_wpLoose_unsopported.push_back(it->electronID("mvaEleID-Fall17-noIso-V2-wpLoose"));
      mvaEleID_Fall17_iso_V2_wpHZZ_unsopported.push_back(it->electronID("mvaEleID-Fall17-noIso-V2-wpLoose"));
 
+     if ((it->genParticleRef ()).isNonnull ())
+     ele_mother.push_back(it->genParticle()->mother(0)->pdgId());
    }
 
-   if(numele==2 && ele_isPF[0]==1 && ele_isPF[1]==1 && ele_charge[0]==(-1.0)*ele_charge[1])
+   if(PFnumele==2 && ele_charge[0]==(-1.0)*ele_charge[1])
    {
      P0.SetPtEtaPhiM(ele_pt[0],ele_eta[0],ele_phi[0],0.00051);
      P1.SetPtEtaPhiM(ele_pt[1],ele_eta[1],ele_phi[1],0.00051);
