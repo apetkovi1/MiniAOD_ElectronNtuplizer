@@ -262,6 +262,7 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
      P=P0+P1;
      Diele_mass=P.M();
      rho=*(rhoHandle.product());
+     if(Diele_mass>1 && Diele_mass<5)
      electron_tree->Fill();
    }
 
