@@ -21,12 +21,17 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 process.source = cms.Source("PoolSource", fileNames =
 cms.untracked.vstring('file:00E6FFAF-1E0A-5049-9C12-FB3C7FFA466C.root') #MC JPsi
 #cms.untracked.vstring('file:00496A25-08B6-FB4E-9681-D5FF4E1BE81F.root') #data BParking
-#cms.untracked.vstring('file:07A30C76-A12D-9C42-8987-885BA67B0D0B.root') #DY Jets
 )
 
 setupEgammaPostRecoSeq(process,era='2018-Prompt')
 
 process.electrons = cms.EDAnalyzer('ElectronAnalyzer',elecSrc = cms.untracked.InputTag("slimmedElectrons"),rhoSrc = cms.untracked.InputTag("fixedGridRhoFastjetAll"))
+
+#process.triggers = cms.EDAnalyzer("TriggerAnalyzer",
+#    bits = cms.InputTag("TriggerResults","","HLT"),
+#    prescales = cms.InputTag("patTrigger"),
+#    objects = cms.InputTag("slimmedPatTrigger"),
+#)
 
 process.TFileService = cms.Service("TFileService", fileName=cms.string("TnP_tree.root"))
 

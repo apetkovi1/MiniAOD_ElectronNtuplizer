@@ -20,6 +20,8 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+#include "DataFormats/Math/interface/deltaR.h"
+
 class ElectronAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
    public:
       explicit ElectronAnalyzer(const edm::ParameterSet&);
@@ -43,9 +45,9 @@ class ElectronAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> 
       std::vector<float> ele_pt,ele_eta,ele_phi,scl_eta,ele_oldsigmaietaieta,ele_oldsigmaiphiiphi,ele_oldcircularity,ele_oldr9,ele_scletawidth,ele_sclphiwidth,ele_he,ele_oldhe,
       ele_kfchi2,ele_gsfchi2,ele_fbrem,ele_ep,ele_eelepout,ele_IoEmIop,ele_deltaetain,ele_deltaphiin,ele_deltaetaseed,
       ele_psEoverEraw,ele_pfPhotonIso,ele_pfChargedHadIso,ele_pfNeutralHadIso,ele_PFPUIso,ElectronMVAEstimatorRun2Fall17IsoV2Values,ElectronMVAEstimatorRun2Fall17IsoV1Values,
-      ElectronMVAEstimatorRun2Fall17NoIsoV1Values,ElectronMVAEstimatorRun2Fall17NoIsoV2Values;
+      ElectronMVAEstimatorRun2Fall17NoIsoV1Values,ElectronMVAEstimatorRun2Fall17NoIsoV2Values, gen_pt, gen_eta, gen_phi, mother_pt, mother_eta, mother_phi;
       std::vector<int> ele_kfhits, ele_chi2_hits,ele_gsfhits, ele_expected_inner_hits,ele_charge,ele_mother;
-      float Diele_mass, rho;
+      float Diele_mass, rho, dR;
       int numele, PFnumele;
       TLorentzVector P,P0,P1;
       std::vector<bool> ele_isPF, cutBasedElectronID_Fall17_94X_V2_veto, cutBasedElectronID_Fall17_94X_V2_loose, cutBasedElectronID_Fall17_94X_V2_medium, cutBasedElectronID_Fall17_94X_V2_tight,
@@ -71,7 +73,6 @@ rhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("rhoSrc"))
    electron_tree->Branch("ele_phi",&ele_phi);
    electron_tree->Branch("ele_isPF",&ele_isPF);
    electron_tree->Branch("Diele_mass",&Diele_mass);
-   electron_tree->Branch("ele_mother",&ele_mother);
 
    //BDT ID branches
    electron_tree->Branch("scl_eta",&scl_eta);
@@ -127,6 +128,17 @@ rhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("rhoSrc"))
    electron_tree->Branch("mvaEleID_Fall17_noIso_V2_wpLoose_unsopported",&mvaEleID_Fall17_noIso_V2_wpLoose_unsopported);
    electron_tree->Branch("mvaEleID_Fall17_iso_V2_wpHZZ_unsopported",&mvaEleID_Fall17_iso_V2_wpHZZ_unsopported);
 
+   //Gen Info
+   electron_tree->Branch("gen_pt",&gen_pt);
+   electron_tree->Branch("gen_eta",&gen_eta);
+   electron_tree->Branch("gen_phi",&gen_phi);
+   electron_tree->Branch("mother_pt",&mother_pt);
+   electron_tree->Branch("mother_eta",&mother_eta);
+   electron_tree->Branch("mother_phi",&mother_phi);
+   electron_tree->Branch("ele_mother",&ele_mother);
+
+   //deltaR
+   electron_tree->Branch("dR",&dR);
 }
 
 
@@ -150,6 +162,7 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    PFnumele=0;
    Diele_mass=0;
    rho=0;
+   dR=0;
    ele_eta.clear();
    ele_phi.clear();
    ele_isPF.clear();
@@ -197,11 +210,18 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    ElectronMVAEstimatorRun2Fall17NoIsoV2Values.clear();
    mvaEleID_Fall17_noIso_V2_wpLoose_unsopported.clear();
    mvaEleID_Fall17_iso_V2_wpHZZ_unsopported.clear();
+   gen_eta.clear();
+   gen_phi.clear();
+   gen_pt.clear();
+   mother_eta.clear();
+   mother_phi.clear();
+   mother_pt.clear();
 
    for (auto it = electrons->cbegin(); it != electrons->cend(); ++it)
    {
      numele++;
      if(it->isPF())
+     {
      PFnumele++;
      ele_eta.push_back(it->eta());
      ele_phi.push_back(it->phi());
@@ -252,7 +272,16 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
      mvaEleID_Fall17_iso_V2_wpHZZ_unsopported.push_back(it->electronID("mvaEleID-Fall17-noIso-V2-wpLoose"));
 
      if ((it->genParticleRef ()).isNonnull ())
-     ele_mother.push_back(it->genParticle()->mother(0)->pdgId());
+     {
+       ele_mother.push_back(it->genParticle()->mother(0)->pdgId());
+       gen_pt.push_back(it->genParticle()->pt());
+       gen_eta.push_back(it->genParticle()->eta());
+       gen_phi.push_back(it->genParticle()->phi());
+       mother_pt.push_back(it->genParticle()->mother(0)->pt());
+       mother_eta.push_back(it->genParticle()->mother(0)->eta());
+       mother_phi.push_back(it->genParticle()->mother(0)->phi());
+     }
+     }
    }
 
    if(PFnumele==2 && ele_charge[0]==(-1.0)*ele_charge[1])
@@ -262,6 +291,7 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
      P=P0+P1;
      Diele_mass=P.M();
      rho=*(rhoHandle.product());
+     dR=deltaR(ele_eta[0],ele_phi[0],ele_eta[1],ele_phi[1]);
      if(Diele_mass>1 && Diele_mass<5)
      electron_tree->Fill();
    }
