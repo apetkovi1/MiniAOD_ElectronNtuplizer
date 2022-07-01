@@ -22,6 +22,9 @@
 
 #include "DataFormats/Math/interface/deltaR.h"
 
+#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
+#include <FWCore/ParameterSet/interface/FileInPath.h>
+
 class ElectronAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
    public:
       explicit ElectronAnalyzer(const edm::ParameterSet&);
@@ -40,6 +43,9 @@ class ElectronAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> 
       edm::InputTag elecSrc_;
       edm::EDGetTokenT<double> theRhoToken;
       edm::InputTag rhoSrc_;
+      typedef std::vector<PileupSummaryInfo> PileupSummaryInfoCollection;
+      edm::EDGetTokenT<PileupSummaryInfoCollection> pileupToken;
+      edm::InputTag pileupSrc_;
 
       TTree *electron_tree;
       std::vector<float> ele_pt,ele_eta,ele_phi,scl_eta,ele_oldsigmaietaieta,ele_oldsigmaiphiiphi,ele_oldcircularity,ele_oldr9,ele_scletawidth,ele_sclphiwidth,ele_he,ele_oldhe,
@@ -58,11 +64,13 @@ class ElectronAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> 
 
 ElectronAnalyzer::ElectronAnalyzer(const edm::ParameterSet& iConfig):
 elecSrc_(iConfig.getUntrackedParameter<edm::InputTag>("elecSrc")),
-rhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("rhoSrc"))
+rhoSrc_(iConfig.getUntrackedParameter<edm::InputTag>("rhoSrc")),
+pileupSrc_(iConfig.getUntrackedParameter<edm::InputTag>("pileupSrc"))
 
 {
    elecCollToken = consumes<pat::ElectronCollection>(elecSrc_);
    theRhoToken = consumes<double>(rhoSrc_);
+   pileupToken = consumes<PileupSummaryInfoCollection>(pileupSrc_);
 
    edm::Service<TFileService> fs;
    electron_tree = fs->make<TTree>("Events", "Events");
@@ -158,6 +166,9 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    edm::Handle<double> rhoHandle;
    iEvent.getByToken(theRhoToken, rhoHandle);
 
+   edm::Handle<PileupSummaryInfoCollection> pileupSummaryInfos;
+   iEvent.getByToken(pileupToken, pileupSummaryInfos);
+
    numele=0;
    PFnumele=0;
    Diele_mass=0;
@@ -217,6 +228,14 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    mother_phi.clear();
    mother_pt.clear();
 
+   /*for (PileupSummaryInfoCollection::const_iterator pileupSummaryInfo = pileupSummaryInfos->begin(); pileupSummaryInfo != pileupSummaryInfos->end(); ++pileupSummaryInfo)
+    {
+      if ( pileupSummaryInfo->getBunchCrossing() == 0 )
+      {
+	      std::cout<<pileupSummaryInfo->getTrueNumInteractions()<<std::endl;  //getTrueNumInteractions, getPU_NumInteractions
+      }
+    }*/
+
    for (auto it = electrons->cbegin(); it != electrons->cend(); ++it)
    {
      numele++;
@@ -269,7 +288,7 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
      ElectronMVAEstimatorRun2Fall17NoIsoV1Values.push_back(it->userFloat("ElectronMVAEstimatorRun2Fall17NoIsoV1Values"));
      ElectronMVAEstimatorRun2Fall17NoIsoV2Values.push_back(it->userFloat("ElectronMVAEstimatorRun2Fall17NoIsoV2Values"));
      mvaEleID_Fall17_noIso_V2_wpLoose_unsopported.push_back(it->electronID("mvaEleID-Fall17-noIso-V2-wpLoose"));
-     mvaEleID_Fall17_iso_V2_wpHZZ_unsopported.push_back(it->electronID("mvaEleID-Fall17-noIso-V2-wpLoose"));
+     mvaEleID_Fall17_iso_V2_wpHZZ_unsopported.push_back(it->electronID("mvaEleID-Fall17-iso-V2-wpHZZ"));
 
      if ((it->genParticleRef ()).isNonnull ())
      {

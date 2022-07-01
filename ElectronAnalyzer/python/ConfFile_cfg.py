@@ -15,7 +15,7 @@ process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condD
 
 process.GlobalTag = GlobalTag(process.GlobalTag, '102X_upgrade2018_realistic_v18')
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1))
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(5000))
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 process.source = cms.Source("PoolSource", fileNames =
@@ -25,7 +25,8 @@ cms.untracked.vstring('file:00E6FFAF-1E0A-5049-9C12-FB3C7FFA466C.root') #MC JPsi
 
 setupEgammaPostRecoSeq(process,era='2018-Prompt')
 
-process.electrons = cms.EDAnalyzer('ElectronAnalyzer',elecSrc = cms.untracked.InputTag("slimmedElectrons"),rhoSrc = cms.untracked.InputTag("fixedGridRhoFastjetAll"))
+process.electrons = cms.EDAnalyzer('ElectronAnalyzer',elecSrc = cms.untracked.InputTag("slimmedElectrons"),rhoSrc = cms.untracked.InputTag("fixedGridRhoFastjetAll"),
+                                   pileupSrc = cms.untracked.InputTag("slimmedAddPileupInfo"))
 
 #process.triggers = cms.EDAnalyzer("TriggerAnalyzer",
 #    bits = cms.InputTag("TriggerResults","","HLT"),
