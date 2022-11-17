@@ -1,1 +1,1 @@
-ignore this file
+CRAB will save information about sent jobs in this directory
