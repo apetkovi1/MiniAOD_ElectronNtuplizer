@@ -27,7 +27,8 @@
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include <FWCore/ParameterSet/interface/FileInPath.h>
 
-#include "/afs/cern.ch/user/n/nstrautn/CMSSW_10_2_10/src/TnP/ElectronAnalyzer/interface/ElectronEffArea.h" // You should add the correct path to the /interface/ElectronEffArea.h file!!!!
+//#include "/afs/cern.ch/user/n/nstrautn/CMSSW_10_2_10/src/TnP/ElectronAnalyzer/interface/ElectronEffArea.h" // You should add the correct path to the /interface/ElectronEffArea.h file!!!!
+#include "/interface/ElectronEffArea.h"
 
 float Ele_Eff_Area(float SCeta_stuff); //  Added the stuff needed for RelIso calculations
 
