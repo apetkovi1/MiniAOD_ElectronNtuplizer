@@ -28,3 +28,9 @@ scram b
 cd ElectronAnalyzer/python
 cmsRun ConfFile_cfg.py
 ```
+
+* If the Configuration files works fine and you get an output -> You can send CRAB jobs to get the result from the whole DATASET (all files in dataset). After running the submit, you'll be able to check on the progress of the jobs with line provided in terminal output.
+```
+voms-proxy-init --voms cms --valid 96:0
+crab submit -c CrabConfig_mini.py
+```

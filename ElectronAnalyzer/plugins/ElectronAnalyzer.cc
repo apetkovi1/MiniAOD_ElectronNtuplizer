@@ -3,7 +3,9 @@
 #include "TTree.h"
 #include "TFile.h"
 #include "TLorentzVector.h"
-#include<vector>
+#include <vector>
+#include <algorithm>
+#include <map>
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
@@ -25,6 +27,12 @@
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include <FWCore/ParameterSet/interface/FileInPath.h>
 
+#include "/interface/ElectronEffArea.h"
+
+float Ele_Eff_Area(float SCeta_stuff); //  Added the stuff needed for RelIso calculations
+
+float zero = 0.0;
+
 class ElectronAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
    public:
       explicit ElectronAnalyzer(const edm::ParameterSet&);
@@ -42,6 +50,7 @@ class ElectronAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> 
       edm::EDGetTokenT<pat::ElectronCollection> elecCollToken;
       edm::InputTag elecSrc_;
       edm::EDGetTokenT<double> theRhoToken;
+      //edm::EDGetTokenT<float> theRhoToken;
       edm::InputTag rhoSrc_;
       typedef std::vector<PileupSummaryInfo> PileupSummaryInfoCollection;
       edm::EDGetTokenT<PileupSummaryInfoCollection> pileupToken;
@@ -51,9 +60,9 @@ class ElectronAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> 
       std::vector<float> ele_pt,ele_eta,ele_phi,scl_eta,ele_oldsigmaietaieta,ele_oldsigmaiphiiphi,ele_oldcircularity,ele_oldr9,ele_scletawidth,ele_sclphiwidth,ele_he,ele_oldhe,
       ele_kfchi2,ele_gsfchi2,ele_fbrem,ele_ep,ele_eelepout,ele_IoEmIop,ele_deltaetain,ele_deltaphiin,ele_deltaetaseed,
       ele_psEoverEraw,ele_pfPhotonIso,ele_pfChargedHadIso,ele_pfNeutralHadIso,ele_PFPUIso,ElectronMVAEstimatorRun2Fall17IsoV2Values,ElectronMVAEstimatorRun2Fall17IsoV1Values,
-      ElectronMVAEstimatorRun2Fall17NoIsoV1Values,ElectronMVAEstimatorRun2Fall17NoIsoV2Values, gen_pt, gen_eta, gen_phi, mother_pt, mother_eta, mother_phi;
+      ElectronMVAEstimatorRun2Fall17NoIsoV1Values,ElectronMVAEstimatorRun2Fall17NoIsoV2Values, gen_pt, gen_eta, gen_phi, mother_pt, mother_eta, mother_phi, relISO_a, relISO_a_corr;
       std::vector<int> ele_kfhits, ele_chi2_hits,ele_gsfhits, ele_expected_inner_hits,ele_charge,ele_mother;
-      float Diele_mass, rho, dR;
+      float Diele_mass, rho, dR, relISO_0, relISO_1,relISO_0_corr, relISO_1_corr;
       int numele, PFnumele;
       TLorentzVector P,P0,P1;
       std::vector<bool> ele_isPF, cutBasedElectronID_Fall17_94X_V2_veto, cutBasedElectronID_Fall17_94X_V2_loose, cutBasedElectronID_Fall17_94X_V2_medium, cutBasedElectronID_Fall17_94X_V2_tight,
@@ -115,6 +124,12 @@ pileupSrc_(iConfig.getUntrackedParameter<edm::InputTag>("pileupSrc"))
    electron_tree->Branch("ele_pfChargedHadIso",&ele_pfChargedHadIso);
    electron_tree->Branch("ele_pfNeutralHadIso",&ele_pfNeutralHadIso);
    electron_tree->Branch("ele_PFPUIso",&ele_PFPUIso);
+   electron_tree->Branch("relISO_0",&relISO_0);
+   electron_tree->Branch("relISO_1",&relISO_1);
+   electron_tree->Branch("relISO_a",&relISO_a);
+   electron_tree->Branch("relISO_0_corr",&relISO_0_corr);
+   electron_tree->Branch("relISO_1_corr",&relISO_1_corr);
+   electron_tree->Branch("relISO_a_corr",&relISO_a_corr);
 
    //Already implemented ID
    electron_tree->Branch("cutBasedElectronID_Fall17_94X_V2_veto",&cutBasedElectronID_Fall17_94X_V2_veto);
@@ -174,6 +189,12 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
    Diele_mass=0;
    rho=0;
    dR=0;
+   relISO_0=0;
+   relISO_1=0;
+   relISO_0_corr=0;
+   relISO_1_corr=0;
+   relISO_a.clear();
+   relISO_a_corr.clear();
    ele_eta.clear();
    ele_phi.clear();
    ele_isPF.clear();
@@ -311,6 +332,33 @@ ElectronAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
      Diele_mass=P.M();
      rho=*(rhoHandle.product());
      dR=deltaR(ele_eta[0],ele_phi[0],ele_eta[1],ele_phi[1]);
+     relISO_0 = (ele_pfPhotonIso[0]+ele_pfChargedHadIso[0]+ele_pfNeutralHadIso[0])/ele_pt[0];
+     relISO_1 = (ele_pfPhotonIso[1]+ele_pfChargedHadIso[1]+ele_pfNeutralHadIso[1])/ele_pt[1];
+     relISO_a = {relISO_0,relISO_1};
+     
+     relISO_0_corr = (ele_pfChargedHadIso[0]+std::max(zero,ele_pfPhotonIso[0]+ele_pfNeutralHadIso[0]-rho*Ele_Eff_Area(scl_eta[0])))/ele_pt[0];
+     relISO_1_corr = (ele_pfChargedHadIso[1]+std::max(zero,ele_pfPhotonIso[1]+ele_pfNeutralHadIso[1]-rho*Ele_Eff_Area(scl_eta[1])))/ele_pt[1];
+     relISO_a_corr = {relISO_0_corr,relISO_1_corr};
+
+     
+     
+     /*
+     if(dR < 0.3){
+
+      relISO_0_woEle = (ele_pfPhotonIso[0]+ele_pfChargedHadIso[0]+ele_pfNeutralHadIso[0]-ele_pt[1])/ele_pt[0];
+      relISO_1_woEle = (ele_pfPhotonIso[1]+ele_pfChargedHadIso[1]+ele_pfNeutralHadIso[1]-ele_pt[0])/ele_pt[1];
+      relISO_a_woEle = {relISO_0_woEle,relISO_1_woEle};
+
+     }
+     else{
+
+      relISO_0_woEle = (ele_pfPhotonIso[0]+ele_pfChargedHadIso[0]+ele_pfNeutralHadIso[0])/ele_pt[0];
+      relISO_1_woEle = (ele_pfPhotonIso[1]+ele_pfChargedHadIso[1]+ele_pfNeutralHadIso[1])/ele_pt[1];
+      relISO_a_woEle = {relISO_0_woEle,relISO_1_woEle};
+
+     }*/
+
+
      if(Diele_mass>1 && Diele_mass<5)
      electron_tree->Fill();
    }
